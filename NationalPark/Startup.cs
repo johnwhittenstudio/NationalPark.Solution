@@ -1,15 +1,13 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using NationalPark.Models;
+using System;
+using System.Reflection;
+using System.IO;
 using Microsoft.OpenApi.Models;
 
 namespace NationalPark
@@ -24,25 +22,47 @@ namespace NationalPark
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
-        {
+    public void ConfigureServices(IServiceCollection services)
+    {
 
-            services.AddControllers();
-            services.AddSwaggerGen(c =>
+        services.AddDbContext<NationalParkContext>(opt =>
+            opt.UseMySql(Configuration["ConnectionStrings:DefaultConnection"], ServerVersion.AutoDetect(Configuration["ConnectionStrings:DefaultConnection"])));
+        services.AddControllers();
+        services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new OpenApiInfo
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "NationalPark", Version = "v1" });
+            Version = "v1",
+            Title = "National Park API",
+            Description = "An ASP.NET Core Web API for sorting National Park data",
+            Contact = new OpenApiContact
+            {
+                Name = "John Whitten",
+                Url = new Uri("https://github.com/johnwhittenstudio")
+            }
             });
+
+            var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+        });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        if (env.IsDevelopment())
         {
-            if (env.IsDevelopment())
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
             {
-                app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "NationalPark v1"));
-            }
+            c.SwaggerEndpoint("/swagger/v1/swagger.json", "NationalParkAPI v1");
+            c.RoutePrefix = string.Empty;
+            });
+
+            // if (env.IsDevelopment())
+            // {
+            //     app.UseDeveloperExceptionPage();
+            // }
 
             // app.UseHttpsRedirection();
 
@@ -52,8 +72,9 @@ namespace NationalPark
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
+            endpoints.MapControllers();
             });
         }
+    }
     }
 }
