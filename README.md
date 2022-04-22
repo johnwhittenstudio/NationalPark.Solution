@@ -1,4 +1,4 @@
-# <p align="center"> 🏔️ **National Parks API** 🏜️ </p>
+# <p align="center"> 🏔️ &nbsp; **National Parks API** &nbsp; 🏜️ </p>
 
 #### _A queryable C#/ASP.NET Core API using RESTful principles and Swagger to sort and document National Park data._
 
